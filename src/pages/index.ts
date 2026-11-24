@@ -1,6 +1,6 @@
 import {
   CalendarDays, ChartColumnIncreasing, ClipboardCheck, FileClock, FileText, LayoutDashboard,
-  ListChecks, LogIn, Settings2, ShieldCheck, Table2, UserRound, UsersRound,
+  ListChecks, LogIn, LogOut, Settings2, ShieldCheck, Table2, UserRound, UsersRound,
 } from 'lucide-react'
 
 export const pages = {
@@ -17,6 +17,7 @@ export const pages = {
   periode: { title: 'Periode Seleksi', icon: CalendarDays },
   laporan: { title: 'Laporan Berita Acara', icon: FileText },
   audit: { title: 'Riwayat Audit Trail', icon: FileClock },
+  logout: { title: 'Keluar', icon: LogOut },
 } as const
 
 export type PageId = keyof typeof pages
@@ -24,5 +25,5 @@ export type PageId = keyof typeof pages
 export const navigationGroups = [
   { label: 'Utama', pageIds: ['dashboard', 'data-mahasiswa', 'kriteria', 'periode'] },
   { label: 'Penilaian', pageIds: ['bobot', 'penilaian', 'topsis', 'borda', 'pengesahan'] },
-  { label: 'Administrasi', pageIds: ['laporan', 'audit', 'profil'] },
+  { label: 'Administrasi', pageIds: ['laporan', 'audit', 'profil', 'logout'] },
 ] as const satisfies readonly { label: string; pageIds: readonly PageId[] }[]

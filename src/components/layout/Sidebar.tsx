@@ -1,11 +1,11 @@
-import { GraduationCap, LogOut } from 'lucide-react'
+import { GraduationCap } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { navigationGroups, pages } from '../../pages'
 import type { PageId } from '../../pages'
 
 interface SidebarProps {
   activePage: PageId
-  onNavigate: (page: PageId) => void
+  onNavigate: (page: Exclude<PageId, 'logout'>) => void
   onLogout?: () => void
 }
 
@@ -27,14 +27,16 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
             <p className="mb-1 px-3 text-xs font-semibold text-slate-300">{label}</p>
             <ul className="space-y-0.5">
               {pageIds.map((id) => {
+                if (id === 'logout' && !onLogout) return null
+
                 const { title, icon: Icon } = pages[id]
-                const isActive = activePage === id
+                const isActive = id !== 'logout' && activePage === id
                 return (
                   <li key={id}>
                     <button
                       type="button"
                       aria-current={isActive ? 'page' : undefined}
-                      onClick={() => onNavigate(id)}
+                      onClick={id === 'logout' ? onLogout : () => onNavigate(id)}
                       className={cn(
                         'flex min-h-11 w-full items-center gap-3 rounded-lg border-l-2 border-transparent px-2.5 py-2 text-left text-sm transition-colors focus-visible:outline-teal-300 motion-reduce:transition-none',
                         isActive
@@ -52,18 +54,6 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
           </div>
         ))}
       </nav>
-      {onLogout && (
-        <div className="shrink-0 border-t border-white/10 px-3 py-3">
-          <button
-            type="button"
-            onClick={onLogout}
-            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-teal-300 motion-reduce:transition-none"
-          >
-            <LogOut size={17} className="shrink-0" aria-hidden="true" />
-            Keluar
-          </button>
-        </div>
-      )}
     </div>
   )
 }
