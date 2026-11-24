@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BarChart3, Eye, EyeOff, GraduationCap, Landmark, LockKeyhole, Mail, ShieldCheck, UsersRound } from 'lucide-react'
+import { ArrowRight, BarChart3, Eye, EyeOff, GraduationCap, Landmark, LockKeyhole, Mail, ShieldCheck, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Badge } from '../components/ui/Badge'
@@ -16,9 +16,8 @@ const roleCards = [
   { title: 'Pengelola Beasiswa', description: 'Kelayakan & berkas', icon: ShieldCheck },
 ]
 
-export function LoginPage({ onLogin, onReturn }: {
+export function LoginPage({ onLogin }: {
   onLogin: (id: EvaluatorId, remember: boolean) => void
-  onReturn?: () => void
 }) {
   const { profiles, authenticate, resetPassword } = useSelection()
   const [email, setEmail] = useState('')
@@ -132,7 +131,6 @@ export function LoginPage({ onLogin, onReturn }: {
               {evaluators.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
             </select>
           </label>
-          {onReturn && <Button variant="ghost" className="mt-2 px-0" onClick={onReturn}><ArrowLeft size={16} aria-hidden="true" /> Kembali ke Dashboard</Button>}
         </section>
       </div>
 

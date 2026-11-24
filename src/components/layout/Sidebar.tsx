@@ -1,4 +1,4 @@
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, LogOut } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { navigationGroups, pages } from '../../pages'
 import type { PageId } from '../../pages'
@@ -6,9 +6,10 @@ import type { PageId } from '../../pages'
 interface SidebarProps {
   activePage: PageId
   onNavigate: (page: PageId) => void
+  onLogout?: () => void
 }
 
-export function Sidebar({ activePage, onNavigate }: SidebarProps) {
+export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-white/15 px-5 py-5 lg:py-6">
@@ -51,6 +52,18 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
           </div>
         ))}
       </nav>
+      {onLogout && (
+        <div className="shrink-0 border-t border-white/10 px-3 py-3">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-teal-300 motion-reduce:transition-none"
+          >
+            <LogOut size={17} className="shrink-0" aria-hidden="true" />
+            Keluar
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -24,5 +24,5 @@ export type PageId = keyof typeof pages
 export const navigationGroups = [
   { label: 'Utama', pageIds: ['dashboard', 'data-mahasiswa', 'kriteria', 'periode'] },
   { label: 'Penilaian', pageIds: ['bobot', 'penilaian', 'topsis', 'borda', 'pengesahan'] },
-  { label: 'Administrasi', pageIds: ['laporan', 'audit', 'profil', 'login'] },
+  { label: 'Administrasi', pageIds: ['laporan', 'audit', 'profil'] },
 ] as const satisfies readonly { label: string; pageIds: readonly PageId[] }[]

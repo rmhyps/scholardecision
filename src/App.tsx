@@ -25,16 +25,12 @@ import type { EvaluatorId } from './types'
 const emptyAssessment: AssessmentDraft = { values: {}, savedAt: null }
 
 export default function App() {
-  const [initialRole] = useState(rememberedRole)
-  const [activePage, setActivePage] = useState<PageId>(initialRole ? 'dashboard' : 'login')
-  const [evaluatorId, setEvaluatorId] = useState<EvaluatorId>(initialRole ?? evaluators[0].id)
-  const [hasSession, setHasSession] = useState(Boolean(initialRole))
+  const [evaluatorId, setEvaluatorId] = useState(rememberedRole)
+  const [activePage, setActivePage] = useState<PageId>(evaluatorId ? 'dashboard' : 'login')
   const { track } = useSelection()
   const [weightDrafts, setWeightDrafts] = useState<Partial<Record<EvaluatorId, WeightDraft>>>({})
   const [assessmentDrafts, setAssessmentDrafts] = useState<Partial<Record<EvaluatorId, AssessmentDraft>>>({})
   const previousPage = useRef(activePage)
-  const evaluator = evaluators.find(({ id }) => id === evaluatorId) ?? evaluators[0]
-  const weightDraft = weightDrafts[evaluatorId] ?? {}
 
   useEffect(() => {
     document.title = `${pages[activePage].title} | ScholarDecision`
@@ -44,25 +40,26 @@ export default function App() {
     document.getElementById('page-title')?.focus({ preventScroll: true })
   }, [activePage])
 
-  function logout() {
-    rememberRole(null)
-    setHasSession(false)
-    setActivePage('login')
-    void track({ actor: evaluatorId, category: 'akses', action: 'Keluar portal akademik', detail: 'Sesi login demo ditutup.', status: 'Tervalidasi' })
-  }
-
-  if (activePage === 'login') {
+  if (!evaluatorId || activePage === 'login') {
     return (
       <LoginPage
         onLogin={(id, remember) => {
           setEvaluatorId(id)
           rememberRole(remember ? id : null)
-          setHasSession(true)
           setActivePage('dashboard')
         }}
-        onReturn={hasSession ? () => setActivePage('dashboard') : undefined}
       />
     )
+  }
+
+  const evaluator = evaluators.find(({ id }) => id === evaluatorId) ?? evaluators[0]
+  const weightDraft = weightDrafts[evaluatorId] ?? {}
+
+  function logout() {
+    rememberRole(null)
+    setEvaluatorId(null)
+    setActivePage('login')
+    void track({ actor: evaluator.id, category: 'akses', action: 'Keluar portal akademik', detail: 'Sesi login demo ditutup.', status: 'Tervalidasi' })
   }
 
   function renderPage() {
@@ -76,23 +73,23 @@ export default function App() {
       case 'bobot':
         return (
           <WeightsPage
-            key={evaluatorId}
+            key={evaluator.id}
             evaluator={evaluator}
             draft={weightDraft}
             updateDraft={(update) => setWeightDrafts((previous) => ({
-              ...previous, [evaluatorId]: update(previous[evaluatorId] ?? {}),
+              ...previous, [evaluator.id]: update(previous[evaluator.id] ?? {}),
             }))}
           />
         )
       case 'penilaian':
         return (
           <AssessmentFormPage
-            key={evaluatorId}
+            key={evaluator.id}
             evaluator={evaluator}
-            draft={assessmentDrafts[evaluatorId] ?? emptyAssessment}
+            draft={assessmentDrafts[evaluator.id] ?? emptyAssessment}
             hasUnsavedWeights={Object.keys(weightDraft).length > 0}
             updateDraft={(update) => setAssessmentDrafts((previous) => ({
-              ...previous, [evaluatorId]: update(previous[evaluatorId] ?? emptyAssessment),
+              ...previous, [evaluator.id]: update(previous[evaluator.id] ?? emptyAssessment),
             }))}
           />
         )
@@ -103,7 +100,7 @@ export default function App() {
       case 'pengesahan':
         return <ValidationPage evaluator={evaluator} onReports={() => setActivePage('laporan')} />
       case 'profil':
-        return <ProfilePage key={evaluatorId} evaluator={evaluator} onLogout={logout} />
+        return <ProfilePage key={evaluator.id} evaluator={evaluator} onLogout={logout} />
       case 'periode':
         return <PeriodsPage evaluator={evaluator} />
       case 'laporan':
@@ -123,6 +120,7 @@ export default function App() {
         void track({ actor: id, category: 'akses', action: 'Beralih peran simulasi', detail: 'Konteks penilaian aktif berganti.', status: 'Tervalidasi' })
       }}
       onNavigate={setActivePage}
+      onLogout={logout}
     >
       {renderPage()}
     </MainLayout>
