@@ -1,4 +1,6 @@
-import { candidateDemoProfile } from '../data/candidateDemoProfiles'
+import { candidateDemoProfile } from '../data/candidateDemoProfiles.ts'
+import { toCsv } from './csv.ts'
+import type { TopsisByEvaluator } from './selectionWorkflow'
 import type { BordaResult, BordaStatus, Candidate } from '../types'
 
 export const institution = [
@@ -42,27 +44,21 @@ export function toReportRows(alternatives: readonly Candidate[], borda: BordaRes
 
 export type ReportRows = ReturnType<typeof toReportRows>
 
-function csvCell(value: string | number) {
-  const text = String(value)
-  const safe = typeof value === 'string' && /^[=+@\t\r-]/.test(text) ? "'" + text : text
-  return '"' + safe.replaceAll('"', '""') + '"'
-}
-
-export function reportCsv(rows: ReportRows, number: string, approved: boolean) {
-  const headings = ['Peringkat', 'Kode', 'Nama', 'NIM Simulasi', 'Program Studi Simulasi', 'IPK', 'Poin Borda', 'Status Rekomendasi', 'Nomor Berita Acara', 'Status Dokumen']
+export function reportCsv(rows: ReportRows, number: string, approved: boolean, topsis: TopsisByEvaluator) {
+  const headings = [
+    'Peringkat', 'Kode', 'Nama', 'NIM', 'Program Studi', 'IPK', 'Poin Borda', 'Status Kuota',
+    'TOPSIS Kemahasiswaan', 'TOPSIS Dosen Wali', 'TOPSIS Pengelola Beasiswa',
+    'Nomor Berita Acara', 'Status Dokumen',
+  ]
+  const preferences = (result: TopsisByEvaluator[keyof TopsisByEvaluator]) =>
+    new Map(result?.rankings.map(({ alternativeId, preference }) => [alternativeId, preference]))
+  const academic = preferences(topsis['dosen-wali'])
+  const financial = preferences(topsis['pengelola-beasiswa'])
+  const studentAffairs = preferences(topsis.kemahasiswaan)
   const records = rows.map(({ rank, code, name, nim, program, ipk, points, status }) => [
-    rank, code, name, nim, program, ipk, points, reportStatusLabels[status], number, approved ? 'Disahkan - Simulasi' : 'Draf - Simulasi',
+    rank, code, name, nim, program, ipk, points, reportStatusLabels[status],
+    studentAffairs.get(code) ?? '', academic.get(code) ?? '', financial.get(code) ?? '',
+    number, approved ? 'Disahkan - Simulasi' : 'Draf - Simulasi',
   ])
-  return '\uFEFF' + [headings, ...records].map((row) => row.map(csvCell).join(',')).join('\r\n')
-}
-
-export function downloadFile(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  document.body.append(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1500)
+  return toCsv([headings, ...records])
 }

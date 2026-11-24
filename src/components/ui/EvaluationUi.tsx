@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
-import type { Criterion } from '../../types'
+import type { Criterion, Evaluator, EvaluatorId } from '../../types'
 import { cn } from '../../lib/cn'
 import { Badge } from './Badge'
 
@@ -43,6 +43,21 @@ export function EvaluationPanel({ title, description, action, children, classNam
       </div>
       {children}
     </section>
+  )
+}
+
+const roleFocus: Record<EvaluatorId, string> = {
+  kemahasiswaan: 'Portofolio, verifikasi berkas, dan pengesahan hasil seleksi.',
+  'dosen-wali': 'Evaluasi akademik dengan fokus pada IPK dan prestasi.',
+  'pengelola-beasiswa': 'Evaluasi finansial dengan fokus pada penghasilan orang tua dan tanggungan.',
+}
+
+export function EvaluatorRoleBanner({ evaluator }: { evaluator: Evaluator }) {
+  return (
+    <p className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
+      <strong className="block text-navy-950">{evaluator.name}</strong>
+      {roleFocus[evaluator.id]}
+    </p>
   )
 }
 

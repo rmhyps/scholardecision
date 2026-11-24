@@ -1,7 +1,9 @@
-import { sha256 } from './demoCrypto'
+import { sha256 } from './demoCrypto.ts'
+import { toCsv } from './csv.ts'
 import type { EvaluatorId } from '../types'
 
 export const auditCategories = {
+  kandidat: 'Data Mahasiswa',
   akses: 'Akses',
   profil: 'Profil',
   bobot: 'Pembobotan',
@@ -65,6 +67,16 @@ export function formatWIB(iso: string) {
 export function dayWIB(iso: string) {
   const parts = wibDate.formatToParts(new Date(iso))
   return ['year', 'month', 'day'].map((kind) => parts.find((part) => part.type === kind)?.value).join('-')
+}
+
+export function auditCsv(records: readonly AuditRecord[], actorName: (actor: AuditRecord['actor']) => string) {
+  return toCsv([
+    ['Waktu (WIB)', 'Aktor', 'Kategori', 'Aksi', 'Detail', 'Status', 'SHA-256'],
+    ...records.map((record) => [
+      formatWIB(record.recordedAt), actorName(record.actor), auditCategories[record.category],
+      record.action, record.detail, record.status, record.hash,
+    ]),
+  ])
 }
 
 export function shortHash(hash: string) {

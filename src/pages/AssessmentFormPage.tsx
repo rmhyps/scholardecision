@@ -2,7 +2,7 @@ import { ClipboardCheck, LockKeyhole, Save } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { EvaluationHeading, fieldStyle } from '../components/ui/EvaluationUi'
+import { EvaluationHeading, EvaluatorRoleBanner, fieldStyle } from '../components/ui/EvaluationUi'
 import { MetricCard } from '../components/ui/MetricCard'
 import { Modal } from '../components/ui/Modal'
 import { Table } from '../components/ui/Table'
@@ -49,9 +49,9 @@ export function AssessmentFormPage({ evaluator, draft, updateDraft, hasUnsavedWe
     return { candidate, cells }
   })
   const complete = matrix.filter(({ cells }) => cells.every(({ valid }) => valid)).length
-  const allComplete = complete === alternatives.length
+  const allComplete = alternatives.length > 0 && complete === alternatives.length
   const canLock = !locked && allComplete && weightsValid && !hasUnsavedWeights
-  const hasEdits = Object.values(draft.values).some((cells) => Object.keys(cells).length > 0)
+  const hasEdits = alternatives.some(({ id }) => Object.keys(draft.values[id] ?? {}).length > 0)
 
   function editScore(candidateId: string, criterionId: CriterionId, value: string) {
     setMessage('')
@@ -91,6 +91,7 @@ export function AssessmentFormPage({ evaluator, draft, updateDraft, hasUnsavedWe
           </Badge>
         </div>
       </EvaluationHeading>
+      <EvaluatorRoleBanner evaluator={evaluator} />
       <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(15rem,1fr)]">
         <section className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-navy-950 text-white"><LockKeyhole size={17} aria-hidden="true" /></span>

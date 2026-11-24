@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { WeightDonut } from '../components/charts/EvaluationCharts'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { CriterionBadge, EvaluationHeading, EvaluationPanel, fieldStyle } from '../components/ui/EvaluationUi'
+import { CriterionBadge, EvaluationHeading, EvaluatorRoleBanner, EvaluationPanel, fieldStyle } from '../components/ui/EvaluationUi'
 import { criterionLabels, formatWeight } from '../lib/gdssFormat'
 import { useGDSS } from '../state/GDSSContext'
 import type { CriterionId, CriterionVector, Evaluator } from '../types'
@@ -82,6 +82,7 @@ export function WeightsPage({ evaluator, draft, updateDraft }: WeightsPageProps)
           <progress aria-label="Total bobot dibanding target 100 persen" value={Math.min(total, 10000)} max={10000} className="mt-2 h-2 w-full accent-teal-700" />
         </EvaluationPanel>
       </div>
+      <EvaluatorRoleBanner evaluator={evaluator} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(15rem,1fr)] xl:items-start">
         <EvaluationPanel title="Distribusi Bobot" description="Rentang 0% sampai 100% per kriteria.">

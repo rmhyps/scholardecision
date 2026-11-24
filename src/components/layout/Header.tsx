@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, CircleUserRound, Menu } from 'lucide-react'
+import { Bell, CircleUserRound, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { activePeriod, evaluators } from '../../data/evaluators'
 import type { EvaluatorId } from '../../types'
@@ -9,12 +9,11 @@ import { Modal } from '../ui/Modal'
 interface HeaderProps {
   evaluatorId: EvaluatorId
   menuOpen: boolean
-  onEvaluatorChange: (id: EvaluatorId) => void
   onOpenMenu: () => void
   onOpenProfile: () => void
 }
 
-export function Header({ evaluatorId, menuOpen, onEvaluatorChange, onOpenMenu, onOpenProfile }: HeaderProps) {
+export function Header({ evaluatorId, menuOpen, onOpenMenu, onOpenProfile }: HeaderProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
 
   return (
@@ -51,22 +50,9 @@ export function Header({ evaluatorId, menuOpen, onEvaluatorChange, onOpenMenu, o
             <CircleUserRound size={22} aria-hidden="true" />
           </Button>
         </div>
-        <label className="flex w-full min-w-0 items-center gap-2 text-sm font-medium text-slate-700 sm:order-none sm:w-auto">
-          <span className="shrink-0">Simulasi peran</span>
-          <span className="relative min-w-0 flex-1">
-            <select
-              value={evaluatorId}
-              onChange={(event) => {
-                const selected = evaluators.find((evaluator) => evaluator.id === event.target.value)
-                if (selected) onEvaluatorChange(selected.id)
-              }}
-              className="min-h-11 w-full appearance-none rounded-lg border border-slate-500 bg-white py-2 pl-3 pr-9 text-sm text-slate-900 sm:w-48"
-            >
-              {evaluators.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
-            </select>
-            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
-          </span>
-        </label>
+        <p className="text-sm font-medium text-slate-700">
+          Akun aktif: {evaluators.find(({ id }) => id === evaluatorId)?.name}
+        </p>
       </div>
       <Modal open={notificationsOpen} onClose={() => setNotificationsOpen(false)} title="Notifikasi">
         <p className="text-sm text-slate-700">Belum ada notifikasi.</p>

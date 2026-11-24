@@ -1,4 +1,4 @@
-import { Activity, ClipboardList, Eye, RotateCcw, ShieldCheck, UsersRound } from 'lucide-react'
+import { Activity, ClipboardList, Download, Eye, RotateCcw, ShieldCheck, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -7,8 +7,9 @@ import { MetricCard } from '../components/ui/MetricCard'
 import { Modal } from '../components/ui/Modal'
 import { Table } from '../components/ui/Table'
 import { evaluators } from '../data/evaluators'
-import { auditCategories, dayWIB, formatWIB, shortHash } from '../lib/auditTrail'
+import { auditCategories, auditCsv, dayWIB, formatWIB, shortHash } from '../lib/auditTrail'
 import type { AuditRecord } from '../lib/auditTrail'
+import { downloadCsv } from '../lib/csv'
 import { approvalSteps } from '../lib/selectionWorkflow'
 import { useGDSS } from '../state/GDSSContext'
 import { useSelection } from '../state/SelectionContext'
@@ -47,7 +48,13 @@ export function AuditPage() {
   return (
     <div className="space-y-5">
       <EvaluationHeading title="Riwayat Aktivitas & Log Sistem" description="Tinjau perubahan evaluasi, kuota, periode, profil, dan keputusan pada sesi simulasi ini.">
-        <Badge tone={validChain ? 'active' : 'info'}>{validChain ? 'Rantai SHA-256 terverifikasi' : 'Audit simulasi'}</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" disabled={!audit.length}
+            onClick={() => downloadCsv(auditCsv(audit, actorName), 'Audit-Trail-ScholarDecision.csv')}>
+            <Download size={16} aria-hidden="true" /> Ekspor CSV
+          </Button>
+          <Badge tone={validChain ? 'active' : 'info'}>{validChain ? 'Rantai SHA-256 terverifikasi' : 'Audit simulasi'}</Badge>
+        </div>
       </EvaluationHeading>
       <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total Log Hari Ini" value={audit.filter(({ recordedAt }) => dayWIB(recordedAt) === today).length} icon={ClipboardList} />

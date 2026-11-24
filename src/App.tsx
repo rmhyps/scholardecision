@@ -67,7 +67,7 @@ export default function App() {
       case 'dashboard':
         return <DashboardPage evaluator={evaluator} onNavigate={setActivePage} />
       case 'data-mahasiswa':
-        return <CandidatesPage />
+        return <CandidatesPage evaluator={evaluator} />
       case 'kriteria':
         return <CriteriaPage evaluator={evaluator} />
       case 'bobot':
@@ -114,11 +114,6 @@ export default function App() {
     <MainLayout
       activePage={activePage}
       evaluatorId={evaluatorId}
-      onEvaluatorChange={(id) => {
-        if (id === evaluatorId) return
-        setEvaluatorId(id)
-        void track({ actor: id, category: 'akses', action: 'Beralih peran simulasi', detail: 'Konteks penilaian aktif berganti.', status: 'Tervalidasi' })
-      }}
       onNavigate={setActivePage}
       onLogout={logout}
     >

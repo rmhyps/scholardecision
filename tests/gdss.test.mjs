@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { gdssDataset } from '../src/data/gdssDataset.ts'
+import { auditCsv, createAuditRecord, verifyAuditChain } from '../src/lib/auditTrail.ts'
+import { reportCsv, toReportRows } from '../src/lib/reportData.ts'
 import { calculateBorda } from '../src/lib/borda.ts'
 import { calculateTOPSIS } from '../src/lib/topsis.ts'
 import { createGDSSState, deriveGDSS, gdssReducer } from '../src/state/gdssState.ts'
@@ -233,4 +235,83 @@ test('perubahan draf menghitung ulang hasil dan kunci menjaga nilai serta bobot'
   assert.equal(deriveGDSS(lockedAll).allLocked, true)
   const quotaChange = gdssReducer(base, { type: 'set-quota', quota: 3 })
   assert.deepEqual(deriveGDSS(quotaChange).borda.selected, ['A04', 'A19', 'A08'])
+})
+
+const newCandidateInput = {
+  name: 'Fitri Widya',
+  nim: '202611001',
+  program: 'Sistem Informasi',
+  referenceScores: { C1: 4, C2: 0, C3: 20, C4: 5, C5: 14 },
+}
+
+test('tambah dan hapus kandidat menyelaraskan ketiga matriks serta peringkat', () => {
+  const initial = createGDSSState()
+  const baseline = deriveGDSS(initial)
+  const locked = gdssReducer(initial, { type: 'lock-evaluation', evaluatorId: 'dosen-wali' })
+  const added = gdssReducer(locked, { type: 'add-candidate', input: newCandidateInput })
+  const results = deriveGDSS(added)
+  assert.equal(added.alternatives.at(-1).id, 'A21')
+  assert.equal(added.alternatives.at(-1).nim, newCandidateInput.nim)
+  assert.equal(results.borda.rankings.length, 21)
+  assert.equal(results.borda.rankings[0].alternativeId, 'A21')
+  for (const id of evaluatorIds) {
+    assert.deepEqual(added.sessions[id].scores.A21, newCandidateInput.referenceScores)
+    assert.equal(added.sessions[id].status, 'draf')
+    assert.equal(results.topsis[id].rankings.length, 21)
+    assert.notEqual(results.topsis[id].norms.C1, baseline.topsis[id].norms.C1)
+  }
+  assert.equal(gdssReducer(added, { type: 'add-candidate', input: newCandidateInput }), added)
+  const deleted = gdssReducer(added, { type: 'delete-candidate', id: 'A21' })
+  for (const id of evaluatorIds) assert.equal(Object.hasOwn(deleted.sessions[id].scores, 'A21'), false)
+  assert.deepEqual(deriveGDSS(deleted).borda, baseline.borda)
+  const readded = gdssReducer(deleted, { type: 'add-candidate', input: newCandidateInput })
+  assert.equal(readded.alternatives.at(-1).id, 'A22')
+})
+
+test('daftar dapat kosong dan perubahan ditolak setelah pengesahan', () => {
+  const initial = createGDSSState()
+  const frozen = gdssReducer(initial, { type: 'freeze-quota' })
+  assert.equal(gdssReducer(frozen, { type: 'add-candidate', input: newCandidateInput }), frozen)
+  assert.equal(gdssReducer(frozen, { type: 'delete-candidate', id: 'A01' }), frozen)
+  const invalid = { ...newCandidateInput, referenceScores: { ...newCandidateInput.referenceScores, C1: 4.01 } }
+  assert.equal(gdssReducer(initial, { type: 'add-candidate', input: invalid }), initial)
+
+  const empty = initial.alternatives.reduce(
+    (state, { id }) => gdssReducer(state, { type: 'delete-candidate', id }), initial,
+  )
+  assert.equal(empty.quota, 0)
+  assert.equal(deriveGDSS(empty).borda, null)
+  const restarted = gdssReducer(empty, { type: 'add-candidate', input: newCandidateInput })
+  assert.equal(deriveGDSS(restarted).borda.quota, 1)
+})
+
+test('CSV rekap memuat status kuota, poin, dan tiga preferensi TOPSIS', () => {
+  const state = gdssReducer(createGDSSState(), {
+    type: 'add-candidate',
+    input: { ...newCandidateInput, name: '=1+1', program: 'Data, Sains' },
+  })
+  const { borda, topsis } = deriveGDSS(state)
+  const csv = reportCsv(toReportRows(state.alternatives, borda), 'DEMO-001', false, topsis)
+  assert.equal(csv.charCodeAt(0), 0xFEFF)
+  assert.equal(csv.split('\r\n').length, 22)
+  assert.match(csv, /"Status Kuota","TOPSIS Kemahasiswaan","TOPSIS Dosen Wali","TOPSIS Pengelola Beasiswa"/)
+  const addedRow = csv.split('\r\n').find((row) => row.includes('"A21"'))
+  assert.ok(addedRow.includes(`"'=1+1","202611001","Data, Sains"`))
+  const preferences = evaluatorIds.map((id) => topsis[id].rankings.find(({ alternativeId }) => alternativeId === 'A21').preference)
+  assert.ok(addedRow.includes(preferences.map((score) => '"' + score + '"').join(',')))
+})
+
+test('CSV audit memuat waktu WIB dan hash SHA-256 lengkap seluruh entri', async () => {
+  const event = { actor: 'sistem', category: 'akses', action: 'Memulai sesi', detail: 'Inisialisasi', status: 'Tervalidasi' }
+  const first = await createAuditRecord(event, '2025-01-01T00:00:00Z')
+  const second = await createAuditRecord({ ...event, action: 'Mencatat transaksi' }, '2025-01-01T00:01:00Z', first)
+  const records = [first, second]
+  const csv = auditCsv(records, () => 'Sistem GDSS')
+  assert.equal(await verifyAuditChain(records), true)
+  assert.equal(csv.charCodeAt(0), 0xFEFF)
+  const [, firstRow, secondRow] = csv.split('\r\n')
+  assert.ok(firstRow.includes('07.00.00 WIB'))
+  assert.ok(firstRow.endsWith('"' + first.hash + '"'))
+  assert.ok(secondRow.endsWith('"' + second.hash + '"'))
+  assert.match(second.hash, /^[a-f0-9]{64}$/)
 })

@@ -6,6 +6,7 @@ import { MetricCard } from '../components/ui/MetricCard'
 import { Table } from '../components/ui/Table'
 import { evaluators } from '../data/evaluators'
 import { formatScore } from '../lib/gdssFormat'
+import { coordinator } from '../lib/selectionWorkflow'
 import { useGDSS } from '../state/GDSSContext'
 import { useSelection } from '../state/SelectionContext'
 import type { BordaStatus, Evaluator } from '../types'
@@ -37,7 +38,8 @@ export function ConsensusPage({ evaluator }: { evaluator: Evaluator }) {
       <EvaluationHeading title="Hasil Konsensus Borda" description="Bandingkan penilaian ketiga evaluator dan lihat rekomendasi berdasarkan kuota.">
         <label className="grid gap-1 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium">
           <span className="flex items-center gap-2"><Award size={18} className="text-teal-800" aria-hidden="true" /> Kuota Penerima</span>
-          <select className={fieldStyle} value={quota} disabled={quotaLocked || busy} onChange={(event) => changeQuota(evaluator.id, Number(event.target.value))}>
+          <select className={fieldStyle} value={quota} disabled={evaluator.id !== coordinator || quotaLocked || busy || !alternatives.length} onChange={(event) => changeQuota(evaluator.id, Number(event.target.value))}>
+            {!alternatives.length && <option value={0}>Belum ada kandidat</option>}
             {alternatives.map(({ id }, index) => <option key={id} value={index + 1}>{index + 1} mahasiswa</option>)}
           </select>
         </label>

@@ -12,6 +12,8 @@ import type { ConsensusRecord, FinalDecision, PeriodDraft, Phase } from '../lib/
 import { criterionIds, evaluatorIds } from '../types'
 import type { EvaluatorId } from '../types'
 import { useGDSS } from './GDSSContext'
+import { candidateInputError } from './gdssState'
+import type { CandidateInput } from './gdssState'
 
 type ProfileUpdates = Pick<DemoProfile, 'name' | 'email' | 'telephone' | 'photo'>
 type AccountActivity = Partial<Record<EvaluatorId, string>>
@@ -33,6 +35,8 @@ interface SelectionContextValue {
   resetPassword: (email: string) => void
   updateProfile: (id: EvaluatorId, updates: ProfileUpdates) => void
   updatePassword: (id: EvaluatorId, current: string, next: string) => Promise<void>
+  addCandidate: (actor: EvaluatorId, input: CandidateInput) => void
+  deleteCandidate: (actor: EvaluatorId, candidateId: string) => void
   addDraft: (actor: EvaluatorId, draft: PeriodDraft) => void
   changeQuota: (actor: EvaluatorId, quota: number) => void
   runConsensus: (actor: EvaluatorId) => Promise<void>
@@ -42,7 +46,7 @@ interface SelectionContextValue {
 const SelectionContext = createContext<SelectionContextValue | null>(null)
 
 export function SelectionProvider({ children }: { children: ReactNode }) {
-  const { dataset, sessions, topsis, borda, quota, allLocked, setQuota, freezeQuota } = useGDSS()
+  const { dataset, sessions, topsis, borda, quota, allLocked, quotaLocked, setQuota, freezeQuota, addCandidate: insertCandidate, deleteCandidate: removeCandidate } = useGDSS()
   const [profiles, setProfiles] = useState(demoProfiles)
   const [lastLogin, setLastLogin] = useState<AccountActivity>({})
   const credentials = useRef<Partial<Record<EvaluatorId, PasswordRecord>>>({})
@@ -100,6 +104,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
           detail: label.join(', '), status: 'Tervalidasi',
         })
       }
+      if (current.status === 'draf') delete lockedAt.current[id]
       if (before.status !== current.status && current.status === 'terkunci') {
         lockedAt.current[id] = new Date().toISOString()
         void track({
@@ -166,7 +171,40 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
     void track({ actor: id, category: 'profil', action: 'Memperbarui kata sandi demo', detail: 'Kredensial demo diganti di tab ini.', status: 'Tervalidasi' })
   }
 
+  function requireOpenSelection() {
+    if (inTransaction.current || quotaLocked) throw new Error('Daftar kandidat sedang diproses atau hasil sudah disahkan.')
+  }
+
+  function addCandidate(actor: EvaluatorId, input: CandidateInput) {
+    requireOpenSelection()
+    const error = candidateInputError(dataset.alternatives, input)
+    if (error) throw new Error(error)
+    insertCandidate(input)
+    setConsensus(null)
+    void track({
+      actor, category: 'kandidat', action: 'Menambah kandidat',
+      detail: input.name.trim() + ' ditambahkan ke ketiga matriks penilaian.', status: 'Tervalidasi',
+    })
+  }
+
+  function deleteCandidate(actor: EvaluatorId, candidateId: string) {
+    requireOpenSelection()
+    const candidate = dataset.alternatives.find(({ id }) => id === candidateId)
+    if (!candidate) throw new Error('Kandidat sudah tidak tersedia.')
+    removeCandidate(candidateId)
+    setConsensus(null)
+    void track({
+      actor, category: 'kandidat', action: 'Menghapus kandidat',
+      detail: candidate.id + ' - ' + candidate.name + ' dihapus dari ketiga matriks penilaian.', status: 'Tervalidasi',
+    })
+  }
+
+  function requireCoordinatorRole(actor: EvaluatorId) {
+    if (actor !== coordinator) throw new Error('Aksi ini tersedia untuk peran Kemahasiswaan.')
+  }
+
   function addDraft(actor: EvaluatorId, draft: PeriodDraft) {
+    requireCoordinatorRole(actor)
     const code = draft.code.trim().toUpperCase()
     const name = draft.name.trim()
     const knownCodes = [activePeriodCode, ...periodExamples.map((period) => period.code), ...drafts.map((period) => period.code)]
@@ -182,7 +220,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
   }
 
   function changeQuota(actor: EvaluatorId, next: number) {
-    if (inTransaction.current || finalDecision || !Number.isInteger(next) || next === quota || next < 1 || next > dataset.alternatives.length) return
+    if (actor !== coordinator || inTransaction.current || finalDecision || !Number.isInteger(next) || next === quota || next < 1 || next > dataset.alternatives.length) return
     const boundary = borda?.rankings[next - 1]
     const tied = boundary && borda.rankings.filter(({ rank }) => rank === boundary.rank)
     const pending = tied && boundary.rank + tied.length - 1 > next ? tied : []
@@ -196,7 +234,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
   }
 
   function requireCoordinator(actor: EvaluatorId) {
-    if (actor !== coordinator) throw new Error('Aksi ini tersedia untuk peran Kemahasiswaan.')
+    requireCoordinatorRole(actor)
     if (inTransaction.current || finalDecision) throw new Error('Hasil sedang diproses atau sudah disahkan.')
     if (!allLocked || !borda) throw new Error('Ketiga sesi penilai perlu terkunci terlebih dahulu.')
     if (borda.pendingTie.length) throw new Error('Selesaikan seri batas kuota sebelum melanjutkan.')
@@ -243,7 +281,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
     <SelectionContext.Provider value={{
       profiles, lastLogin, drafts, finalDecision, consensus: latestConsensus,
       phase, busy, audit, integrity, auditError, track,
-      authenticate, resetPassword, updateProfile, updatePassword, addDraft,
+      authenticate, resetPassword, updateProfile, updatePassword, addCandidate, deleteCandidate, addDraft,
       changeQuota, runConsensus, finalize,
     }}>
       {children}

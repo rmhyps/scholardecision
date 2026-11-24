@@ -3,7 +3,7 @@ import { useId, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { RankingBars } from '../components/charts/EvaluationCharts'
 import { Badge } from '../components/ui/Badge'
-import { EvaluationHeading, EvaluationPanel } from '../components/ui/EvaluationUi'
+import { EvaluationHeading, EvaluatorRoleBanner, EvaluationPanel } from '../components/ui/EvaluationUi'
 import { Table } from '../components/ui/Table'
 import { cn } from '../lib/cn'
 import { criterionLabels, formatPrecision, formatScore } from '../lib/gdssFormat'
@@ -128,9 +128,10 @@ export function TopsisResultsPage({ evaluator }: { evaluator: Evaluator }) {
           </Badge>
         </div>
       </EvaluationHeading>
+      <EvaluatorRoleBanner evaluator={evaluator} />
 
       {!result ? (
-        <p role="status" className="rounded-xl bg-orange-50 p-4 text-sm text-orange-900">Hasil tersedia setelah bobot penilai berjumlah 100%.</p>
+        <p role="status" className="rounded-xl bg-orange-50 p-4 text-sm text-orange-900">{alternatives.length ? 'Hasil tersedia setelah bobot penilai berjumlah 100%.' : 'Belum ada kandidat untuk diperingkat.'}</p>
       ) : (
         <>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)] xl:items-start">

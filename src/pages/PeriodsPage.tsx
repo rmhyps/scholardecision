@@ -8,7 +8,7 @@ import { MetricCard } from '../components/ui/MetricCard'
 import { Table } from '../components/ui/Table'
 import { WorkflowStepper } from '../components/ui/WorkflowStepper'
 import { activePeriod, evaluators } from '../data/evaluators'
-import { activePeriodCode, approvalSteps, periodExamples } from '../lib/selectionWorkflow'
+import { activePeriodCode, approvalSteps, coordinator, periodExamples } from '../lib/selectionWorkflow'
 import type { PeriodDraft } from '../lib/selectionWorkflow'
 import { useGDSS } from '../state/GDSSContext'
 import { useSelection } from '../state/SelectionContext'
@@ -30,6 +30,7 @@ export function PeriodsPage({ evaluator }: { evaluator: Evaluator }) {
   const [reviewing, setReviewing] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const canManage = evaluator.id === coordinator
   const finished = evaluators.filter(({ id }) => sessions[id].status === 'terkunci').length
   const active = { code: activePeriodCode, name: cycleTitle, startsOn: '2025-10-01', endsOn: '2025-11-15', quota, status: 'Aktif' }
   const rows = [active, ...periodExamples, ...drafts.map((row) => ({ ...row, status: 'Draf' }))]
@@ -59,7 +60,7 @@ export function PeriodsPage({ evaluator }: { evaluator: Evaluator }) {
 
   return (
     <div className="space-y-5">
-      <EvaluationHeading title="Manajemen Periode Seleksi Beasiswa" description="Pantau siklus penilaian aktif dan siapkan draf periode berikutnya." />
+      <EvaluationHeading title="Manajemen Periode Seleksi Beasiswa" description={canManage ? 'Pantau siklus penilaian aktif dan siapkan draf periode berikutnya.' : 'Pantau siklus penilaian aktif dan riwayat periode.'} />
       <section className="space-y-4 rounded-xl bg-navy-950 p-5 text-white sm:p-6" aria-label="Periode berjalan aktif">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -80,7 +81,7 @@ export function PeriodsPage({ evaluator }: { evaluator: Evaluator }) {
         <MetricCard label="Kriteria Penilaian Aktif" value={dataset.criteria.length} icon={CheckCircle2} />
       </dl>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(17rem,1fr)] xl:items-start">
+      <div className={canManage ? 'grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(17rem,1fr)] xl:items-start' : undefined}>
         <EvaluationPanel title="Daftar Siklus Periode" description="Siklus terdahulu dan mendatang merupakan contoh simulasi.">
           <Table caption="Daftar periode seleksi" className="min-w-[34rem]">
             <thead><tr>{['Kode', 'Nama Periode', 'Kuota', 'Rentang Waktu', 'Status'].map((label) => <th key={label} scope="col">{label}</th>)}</tr></thead>
@@ -97,32 +98,34 @@ export function PeriodsPage({ evaluator }: { evaluator: Evaluator }) {
           </Table>
         </EvaluationPanel>
 
-        <EvaluationPanel title="Konfigurasi Cepat" description={reviewing ? 'Tinjau rincian draf.' : 'Buat draf siklus untuk periode berikutnya.'} action={<Badge tone="info">Langkah {reviewing ? 2 : 1} / 2</Badge>}>
-          <form className="space-y-3" onSubmit={submit}>
-            {reviewing ? (
-              <dl className="space-y-1 rounded-lg bg-blue-50 p-3 text-sm">
-                <dt className="font-semibold">{draft.code.toUpperCase()}</dt><dd>{draft.name}</dd>
-                <dd>{dateLabel(draft.startsOn)} - {dateLabel(draft.endsOn)}</dd><dd>Kuota {draft.quota} mahasiswa</dd>
-              </dl>
-            ) : (
-              <>
-                <label className="grid gap-1 text-sm font-medium">Kode Periode<input className={fieldStyle} value={draft.code} placeholder="PRD-2026-2" required pattern="[A-Za-z0-9\-]{3,24}" onChange={(event) => setDraft({ ...draft, code: event.target.value })} /></label>
-                <label className="grid gap-1 text-sm font-medium">Nama Periode<input className={fieldStyle} value={draft.name} required maxLength={110} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
-                <label className="grid gap-1 text-sm font-medium">Kuota Penerima<input className={fieldStyle} type="number" min={1} max={dataset.alternatives.length} required value={Number.isNaN(draft.quota) ? '' : draft.quota} onChange={(event) => setDraft({ ...draft, quota: event.target.valueAsNumber })} /></label>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                  <label className="grid min-w-0 gap-1 text-sm font-medium">Tanggal Mulai<input className={fieldStyle} type="date" required value={draft.startsOn} onChange={(event) => setDraft({ ...draft, startsOn: event.target.value })} /></label>
-                  <label className="grid min-w-0 gap-1 text-sm font-medium">Tanggal Selesai<input className={fieldStyle} type="date" required min={draft.startsOn || undefined} value={draft.endsOn} onChange={(event) => setDraft({ ...draft, endsOn: event.target.value })} /></label>
-                </div>
-              </>
-            )}
-            {error && <p role="alert" className="text-sm text-orange-900">{error}</p>}
-            {notice && <p role="status" className="text-sm text-teal-900">{notice}</p>}
-            <div className="flex flex-wrap justify-end gap-2">
-              {reviewing && <Button variant="secondary" onClick={() => setReviewing(false)}>Ubah Draf</Button>}
-              <Button type="submit"><Plus size={17} aria-hidden="true" />{reviewing ? 'Simpan Draf Periode' : 'Tinjau Draf'}</Button>
-            </div>
-          </form>
-        </EvaluationPanel>
+        {canManage && (
+          <EvaluationPanel title="Tambah Periode Baru" description={reviewing ? 'Tinjau rincian draf.' : 'Buat draf siklus untuk periode berikutnya.'} action={<Badge tone="info">Langkah {reviewing ? 2 : 1} / 2</Badge>}>
+            <form className="space-y-3" onSubmit={submit}>
+              {reviewing ? (
+                <dl className="space-y-1 rounded-lg bg-blue-50 p-3 text-sm">
+                  <dt className="font-semibold">{draft.code.toUpperCase()}</dt><dd>{draft.name}</dd>
+                  <dd>{dateLabel(draft.startsOn)} - {dateLabel(draft.endsOn)}</dd><dd>Kuota {draft.quota} mahasiswa</dd>
+                </dl>
+              ) : (
+                <>
+                  <label className="grid gap-1 text-sm font-medium">Kode Periode<input className={fieldStyle} value={draft.code} placeholder="PRD-2026-2" required pattern="[A-Za-z0-9\-]{3,24}" onChange={(event) => setDraft({ ...draft, code: event.target.value })} /></label>
+                  <label className="grid gap-1 text-sm font-medium">Nama Periode<input className={fieldStyle} value={draft.name} required maxLength={110} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
+                  <label className="grid gap-1 text-sm font-medium">Kuota Penerima<input className={fieldStyle} type="number" min={1} max={dataset.alternatives.length} required value={Number.isNaN(draft.quota) ? '' : draft.quota} onChange={(event) => setDraft({ ...draft, quota: event.target.valueAsNumber })} /></label>
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                    <label className="grid min-w-0 gap-1 text-sm font-medium">Tanggal Mulai<input className={fieldStyle} type="date" required value={draft.startsOn} onChange={(event) => setDraft({ ...draft, startsOn: event.target.value })} /></label>
+                    <label className="grid min-w-0 gap-1 text-sm font-medium">Tanggal Selesai<input className={fieldStyle} type="date" required min={draft.startsOn || undefined} value={draft.endsOn} onChange={(event) => setDraft({ ...draft, endsOn: event.target.value })} /></label>
+                  </div>
+                </>
+              )}
+              {error && <p role="alert" className="text-sm text-orange-900">{error}</p>}
+              {notice && <p role="status" className="text-sm text-teal-900">{notice}</p>}
+              <div className="flex flex-wrap justify-end gap-2">
+                {reviewing && <Button variant="secondary" onClick={() => setReviewing(false)}>Ubah Draf</Button>}
+                <Button type="submit"><Plus size={17} aria-hidden="true" />{reviewing ? 'Simpan Draf Periode' : 'Tinjau Draf'}</Button>
+              </div>
+            </form>
+          </EvaluationPanel>
+        )}
       </div>
     </div>
   )

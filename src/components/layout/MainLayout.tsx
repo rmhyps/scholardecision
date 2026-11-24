@@ -11,12 +11,11 @@ interface MainLayoutProps {
   activePage: PageId
   children: ReactNode
   evaluatorId: EvaluatorId
-  onEvaluatorChange: (id: EvaluatorId) => void
   onNavigate: (page: PageId) => void
   onLogout?: () => void
 }
 
-export function MainLayout({ activePage, children, evaluatorId, onEvaluatorChange, onNavigate, onLogout }: MainLayoutProps) {
+export function MainLayout({ activePage, children, evaluatorId, onNavigate, onLogout }: MainLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const reduceMotion = useReducedMotion()
 
@@ -40,13 +39,12 @@ export function MainLayout({ activePage, children, evaluatorId, onEvaluatorChang
         Lompat ke konten utama
       </a>
       <aside className="sticky top-0 hidden h-dvh flex-col self-start bg-navy-950 lg:flex">
-        <Sidebar activePage={activePage} onNavigate={onNavigate} onLogout={onLogout} />
+        <Sidebar evaluatorId={evaluatorId} activePage={activePage} onNavigate={onNavigate} onLogout={onLogout} />
       </aside>
       <div className="min-w-0">
         <Header
           evaluatorId={evaluatorId}
           menuOpen={menuOpen}
-          onEvaluatorChange={onEvaluatorChange}
           onOpenMenu={() => setMenuOpen(true)}
           onOpenProfile={() => onNavigate('profil')}
         />
@@ -63,6 +61,7 @@ export function MainLayout({ activePage, children, evaluatorId, onEvaluatorChang
       </div>
       <Modal id="mobile-navigation" open={menuOpen} onClose={() => setMenuOpen(false)} drawer title="Menu">
         <Sidebar
+          evaluatorId={evaluatorId}
           activePage={activePage}
           onNavigate={(page) => {
             setMenuOpen(false)

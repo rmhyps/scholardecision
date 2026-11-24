@@ -1,15 +1,18 @@
 import { GraduationCap } from 'lucide-react'
+import { coordinator } from '../../lib/selectionWorkflow'
+import type { EvaluatorId } from '../../types'
 import { cn } from '../../lib/cn'
 import { navigationGroups, pages } from '../../pages'
 import type { PageId } from '../../pages'
 
 interface SidebarProps {
   activePage: PageId
+  evaluatorId: EvaluatorId
   onNavigate: (page: Exclude<PageId, 'logout'>) => void
   onLogout?: () => void
 }
 
-export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
+export function Sidebar({ activePage, evaluatorId, onNavigate, onLogout }: SidebarProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-white/15 px-5 py-5 lg:py-6">
@@ -27,6 +30,7 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
             <p className="mb-1 px-3 text-xs font-semibold text-slate-300">{label}</p>
             <ul className="space-y-0.5">
               {pageIds.map((id) => {
+                if (id === 'pengesahan' && evaluatorId !== coordinator) return null
                 if (id === 'logout' && !onLogout) return null
 
                 const { title, icon: Icon } = pages[id]

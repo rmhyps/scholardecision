@@ -26,6 +26,7 @@ export function ValidationPage({ evaluator, onReports }: { evaluator: Evaluator;
   const names = new Map(dataset.alternatives.map((candidate) => [candidate.id, candidate]))
 
   async function execute(action: 'consensus' | 'final') {
+    if (!canManage) return
     setError('')
     try {
       if (action === 'consensus') await runConsensus(evaluator.id)
@@ -40,7 +41,9 @@ export function ValidationPage({ evaluator, onReports }: { evaluator: Evaluator;
 
   return (
     <div className="space-y-5">
-      <EvaluationHeading title="Pengesahan Hasil Seleksi" description="Tinjau evaluasi ketiga penilai, jalankan konsensus Borda, lalu sahkan rekomendasi.">
+      <EvaluationHeading title="Pengesahan Hasil Seleksi" description={canManage
+        ? 'Tinjau evaluasi ketiga penilai, jalankan konsensus Borda, lalu sahkan rekomendasi.'
+        : 'Tinjau status evaluasi dan rekomendasi periode aktif.'}>
         <Badge tone={finalDecision ? 'active' : 'info'}>{finalDecision ? 'Disahkan / Terkunci' : 'Akses pengesahan: Kemahasiswaan'}</Badge>
       </EvaluationHeading>
       <WorkflowStepper labels={approvalSteps} current={phase} complete={phase === 3} />
@@ -90,11 +93,10 @@ export function ValidationPage({ evaluator, onReports }: { evaluator: Evaluator;
             <p className="flex items-center gap-2 text-sm font-semibold text-teal-900"><LockKeyhole size={18} aria-hidden="true" /> Disahkan / Terkunci · {formatWIB(finalDecision.payload.approvedAt)}</p>
             <Button onClick={onReports}>Buka Berita Acara <ArrowRight size={16} aria-hidden="true" /></Button>
           </div>
-        ) : (
+        ) : canManage ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-700">
-              {!canManage ? 'Peran Kemahasiswaan menjalankan konsensus dan pengesahan.' :
-                !allLocked ? 'Ketiga penilai harus mengunci sesi sebelum konsensus.' :
+              {!allLocked ? 'Ketiga penilai harus mengunci sesi sebelum konsensus.' :
                 consensus ? 'Konsensus siap disahkan.' : 'Jalankan konsensus sebelum mengesahkan hasil.'}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -104,12 +106,18 @@ export function ValidationPage({ evaluator, onReports }: { evaluator: Evaluator;
               </Button>
             </div>
           </div>
+        ) : null}
+        {!canManage && !finalDecision && (
+          <div role="status" className="space-y-1 text-sm text-slate-700">
+            <p className="font-semibold">Menunggu Pengesahan oleh Bagian Kemahasiswaan</p>
+            <p>Akses Terbatas: Hanya Bagian Kemahasiswaan yang berhak menjalankan konsensus dan mengesahkan keputusan akhir.</p>
+          </div>
         )}
         {busy && <p role="status" className="text-sm text-slate-700">Memproses hasil dan audit...</p>}
         {error && !confirm && <p role="alert" className="text-sm font-medium text-orange-900">{error}</p>}
       </div>
 
-      <Modal open={confirm && !finalDecision} title="Konfirmasi Pengesahan Hasil Akhir" onClose={() => { if (!busy) setConfirm(false) }}>
+      <Modal open={canManage && confirm && !finalDecision} title="Konfirmasi Pengesahan Hasil Akhir" onClose={() => { if (!busy) setConfirm(false) }}>
         <p className="text-sm leading-relaxed text-slate-700">Apakah Anda yakin ingin mengesahkan hasil seleksi beasiswa? Tindakan ini bersifat final.</p>
         <p className="mt-3 rounded-lg bg-blue-50 p-3 text-sm font-semibold">{current?.selected.length ?? 0} kandidat masuk kuota.</p>
         {busy && <p role="status" className="mt-2 text-sm">Membentuk bukti digital simulasi...</p>}

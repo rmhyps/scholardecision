@@ -21,6 +21,8 @@ export interface CriterionDefinition extends Criterion {
 }
 
 export interface Candidate extends Alternative {
+  nim?: string
+  program?: string
   sourceId: number
   periodId: number
   referenceScores: CriterionVector

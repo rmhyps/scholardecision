@@ -6,7 +6,8 @@ import { EvaluationHeading } from '../components/ui/EvaluationUi'
 import { activePeriod, evaluators } from '../data/evaluators'
 import { formatWIB, shortHash } from '../lib/auditTrail'
 import { formatIPK, formatScore, formatWeight } from '../lib/gdssFormat'
-import { concordanceLabel, downloadFile, institution, reportCsv, reportNotice, reportStatusLabels, reportTitle, toReportRows } from '../lib/reportData'
+import { concordanceLabel, institution, reportCsv, reportNotice, reportStatusLabels, reportTitle, toReportRows } from '../lib/reportData'
+import { downloadCsv, downloadFile } from '../lib/csv'
 import { activePeriodCode, documentNumber, kendallW, reportSigners } from '../lib/selectionWorkflow'
 import { useGDSS } from '../state/GDSSContext'
 import { useSelection } from '../state/SelectionContext'
@@ -40,7 +41,7 @@ export function ReportsPage() {
   }
 
   function csv() {
-    downloadFile(new Blob([reportCsv(rows, number, !!payload)], { type: 'text/csv;charset=utf-8' }), 'Rekap-Simulasi-' + periodCode + '.csv')
+    downloadCsv(reportCsv(rows, number, !!payload, topsis), 'Rekap-Simulasi-' + periodCode + '.csv')
   }
 
   function proof() {
