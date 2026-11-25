@@ -136,7 +136,7 @@ export function TopsisResultsPage({ evaluator }: { evaluator: Evaluator }) {
         <>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)] xl:items-start">
             <EvaluationPanel title="Tabel Peringkat TOPSIS Individual" description="Skor tertinggi menjadi Prioritas Utama. Kandidat lain hingga peringkat tiga direkomendasikan." action={<Badge tone="info">{result.rankings.length} kandidat</Badge>}>
-              <Table caption="Peringkat TOPSIS penilai aktif" regionClassName="max-h-[24rem] overflow-auto" className="min-w-[31rem] tabular-nums [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10">
+              <Table caption="Peringkat TOPSIS penilai aktif" regionClassName="max-h-none md:max-h-[24rem] overflow-auto" className="min-w-[31rem] tabular-nums [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10">
                 <thead>
                   <tr>
                     {['Peringkat', 'Kode', 'Nama Mahasiswa', 'Nilai Vi', 'Status'].map((label) => <th key={label} scope="col">{label}</th>)}

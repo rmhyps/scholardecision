@@ -130,17 +130,17 @@ export function CandidatesPage({ evaluator }: { evaluator: Evaluator }) {
               <option value="pending">Menunggu</option>
             </select>
           </label>
-          <Button variant="secondary" onClick={() => { setSearch(''); setSemester(''); setStatus('') }} className="self-end">
+          <Button variant="secondary" onClick={() => { setSearch(''); setSemester(''); setStatus('') }} className="w-full sm:w-auto sm:self-end">
             <RotateCcw size={16} aria-hidden="true" /> Reset Filter
           </Button>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-slate-600">NIM, program studi, dan status verifikasi kandidat bawaan adalah data simulasi.</p>
       </div>
 
-      <Table caption="Daftar calon mahasiswa" className="min-w-[61rem] tabular-nums">
+      <Table caption="Daftar calon mahasiswa" className="min-w-[57rem] tabular-nums" stickyFirstColumn>
         <thead>
           <tr>
-            {['Kode', 'Nama Mahasiswa', 'NIM', 'Program Studi', 'IPK', 'Penghasilan', 'Tanggungan', 'Prestasi', 'Semester', 'Aksi'].map((label) =>
+            {['Kandidat', 'NIM', 'Program Studi', 'IPK', 'Penghasilan', 'Tanggungan', 'Prestasi', 'Semester', 'Aksi'].map((label) =>
               <th key={label} scope="col" className="whitespace-nowrap">{label}</th>,
             )}
           </tr>
@@ -148,11 +148,11 @@ export function CandidatesPage({ evaluator }: { evaluator: Evaluator }) {
         <tbody>
           {filtered.map(({ candidate, nim, program, verified }) => (
             <tr key={candidate.id} className="even:bg-slate-50">
-              <th scope="row" className="whitespace-nowrap text-navy-950">{candidate.id}</th>
-              <td className="min-w-40">
-                <span className="mb-1.5 block font-medium">{candidate.name}</span>
+              <th scope="row" className="w-32 text-navy-950 sm:w-40">
+                <span className="block text-xs">{candidate.id}</span>
+                <span className="mb-1.5 block font-medium [overflow-wrap:anywhere]">{candidate.name}</span>
                 <VerificationBadge verified={verified} />
-              </td>
+              </th>
               <td className="whitespace-nowrap">{nim}</td>
               <td>{program}</td>
               {criteria.map(({ id }) => <td key={id} className="whitespace-nowrap text-right">{formatProfileScore(id, candidate.referenceScores[id])}</td>)}

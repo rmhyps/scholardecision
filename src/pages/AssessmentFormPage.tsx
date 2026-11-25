@@ -107,7 +107,7 @@ export function AssessmentFormPage({ evaluator, draft, updateDraft, hasUnsavedWe
         </dl>
       </div>
 
-      <Table caption={`Matriks penilaian ${evaluator.name}`} className="min-w-[49rem]">
+      <Table caption={`Matriks penilaian ${evaluator.name}`} className="min-w-[49rem]" stickyFirstColumn>
         <thead>
           <tr>
             <th scope="col">Kandidat</th>
@@ -122,9 +122,9 @@ export function AssessmentFormPage({ evaluator, draft, updateDraft, hasUnsavedWe
         <tbody>
           {matrix.map(({ candidate, cells }) => (
             <tr key={candidate.id} className="even:bg-slate-50">
-              <th scope="row" className="min-w-40 text-navy-950">
+              <th scope="row" className="w-32 text-navy-950 sm:w-40">
                 <span className="mr-2"><Badge tone="info">{candidate.id}</Badge></span>
-                {candidate.name}
+                <span className="break-words [overflow-wrap:anywhere]">{candidate.name}</span>
               </th>
               {cells.map(({ criterion, value, valid }) => {
                 const errorId = `score-error-${candidate.id}-${criterion.id}`

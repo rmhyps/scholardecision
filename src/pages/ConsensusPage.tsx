@@ -65,7 +65,7 @@ export function ConsensusPage({ evaluator }: { evaluator: Evaluator }) {
               description={`Poin per penilai = ${alternatives.length} - peringkat individual. Angka dalam kurung menunjukkan poin.`}
               action={<Badge tone="active">Kuota {quota}</Badge>}
             >
-              <Table caption="Peringkat dan poin konsensus Borda" regionClassName="max-h-[24rem] overflow-auto" className="min-w-[39rem] tabular-nums [&_td]:px-2 [&_th]:px-2 [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead_th]:text-xs">
+              <Table caption="Peringkat dan poin konsensus Borda" regionClassName="max-h-none md:max-h-[24rem] overflow-auto" className="min-w-[39rem] tabular-nums [&_td]:px-2 [&_th]:px-2 [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead_th]:text-xs">
                 <thead>
                   <tr>
                     <th scope="col">Kode</th>

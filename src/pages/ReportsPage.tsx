@@ -121,7 +121,7 @@ export function ReportsPage() {
             {signers.map(({ id, role, weights }) => (
               <div key={id} className="rounded-lg border border-slate-200 p-3 text-xs">
                 <p className="mb-2 font-semibold">{role}</p>
-                <dl className="grid grid-cols-5 gap-1">
+                <dl className="grid grid-cols-[repeat(auto-fit,minmax(2.75rem,1fr))] gap-x-1 gap-y-2">
                   {criterionIds.map((criterion) => <div key={criterion}><dt>{criterion}</dt><dd className="font-semibold">{formatWeight(weights[criterion])}</dd></div>)}
                 </dl>
               </div>

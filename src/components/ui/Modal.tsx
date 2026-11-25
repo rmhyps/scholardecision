@@ -40,7 +40,7 @@ export function Modal({ children, className, drawer = false, id, onClose, open, 
         'bg-white text-slate-900 backdrop:bg-navy-950/60',
         drawer
           ? 'fixed inset-y-0 left-0 right-auto m-0 h-dvh max-h-none w-[min(19rem,calc(100vw-1.5rem))] max-w-none bg-navy-950 text-white'
-          : 'm-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg rounded-xl shadow-xl',
+          : 'm-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl shadow-xl',
         className,
       )}
     >

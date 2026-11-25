@@ -121,7 +121,7 @@ export function WeightsPage({ evaluator, draft, updateDraft }: WeightsPageProps)
                   step="0.01"
                   value={(hundredths ?? 0) / 100}
                   disabled={locked}
-                  className="mt-2 h-8 w-full cursor-pointer accent-teal-700 disabled:cursor-not-allowed"
+                  className="mt-2 h-11 w-full cursor-pointer accent-teal-700 disabled:cursor-not-allowed"
                   onChange={(event) => editWeight(criterion.id, event.target.value)}
                 />
                 {hundredths === null && <p id={`weight-error-${criterion.id}`} className="text-xs text-orange-900">Masukkan 0 sampai 100 dengan maksimal dua desimal.</p>}
